@@ -1,60 +1,80 @@
-import { Client } from './client/Client';
-import { Interceptors } from './client/core/OpenAPI';
+import {
+  Assets,
+  Collections,
+  Components,
+  Forms,
+  FormSubmissions,
+  Items,
+  Pages,
+  PublicFiles,
+  Redirects,
+  Sites,
+  Webhooks,
+} from './client/sdk.gen';
+import { client } from './client/client.gen';
+
+export * from './client/types.gen';
 
 type Config = {
+  url?: string;
   token: string;
 };
 
-export class VersolyClient extends Client {
+export class VersolyClient {
   constructor(config: Config) {
-    let requestMadeAt: number[] = [];
-
-    super({
-      BASE: 'http://localhost:8080',
-      HEADERS: {
+    client.setConfig({
+      baseUrl: config.url,
+      headers: {
         Authorization: `Bearer ${config.token}`,
       },
-      interceptors: {
-        request: {
-          use: () => {},
-          eject: async (request) => {
-            console.log(request);
-          },
-          _fns: [
-            async (request) => {
-              requestMadeAt = requestMadeAt.filter((time) => Date.now() - time < 1000);
-              requestMadeAt.push(Date.now());
+    });
 
-              if (requestMadeAt.length >= 3) {
-                await new Promise((resolve) => setTimeout(resolve, 1000));
-              }
+    let requestMadeAt: number[] = [];
 
-              return request;
-            },
-            async (request) => {
-              // @ts-ignore
-              if (request.headers?.['Content-Type'] === 'multipart/form-data') {
-                const formData = request.body as FormData;
-                const size = Array.from(formData.entries()).reduce((acc, [key, value]) => {
-                  if (value instanceof Blob) {
-                    acc += value.size;
-                  }
+    client.interceptors.request.use(async (request) => {
+      requestMadeAt = requestMadeAt.filter((time) => Date.now() - time < 1000);
+      requestMadeAt.push(Date.now());
 
-                  return acc;
-                }, 0);
+      if (requestMadeAt.length > 3) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        requestMadeAt = [];
+      }
 
-                if (size > 1000000) {
-                  throw new Error('File size is too big');
-                }
-              }
+      return request;
+    });
 
-              return request;
-            },
-          ],
-        },
-        // request: new Interceptors(),
-        response: new Interceptors(),
-      },
+    client.interceptors.request.use(async (request) => {
+      const headers = request.headers as Headers;
+
+      if (request.body && headers.get('Content-Type') === 'multipart/form-data') {
+        // @ts-ignore
+        const formData = request.body as FormData;
+        const size = Array.from(formData.entries()).reduce((acc, [_key, value]) => {
+          if (value instanceof Blob) {
+            acc += value.size;
+          }
+
+          return acc;
+        }, 0);
+
+        if (size > 1000000) {
+          throw new Error('File size is too big');
+        }
+      }
+
+      return request;
     });
   }
+
+  assets = Assets;
+  collections = Collections;
+  components = Components;
+  forms = Forms;
+  formSubmissions = FormSubmissions;
+  items = Items;
+  pages = Pages;
+  publicFiles = PublicFiles;
+  redirects = Redirects;
+  sites = Sites;
+  webhooks = Webhooks;
 }
