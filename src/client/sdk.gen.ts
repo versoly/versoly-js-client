@@ -21,6 +21,9 @@ import type {
   DeletePublicFileData,
   DeletePublicFileErrors,
   DeletePublicFileResponses,
+  DeleteRedirectsData,
+  DeleteRedirectsErrors,
+  DeleteRedirectsResponses,
   DeleteWebhookData,
   DeleteWebhookErrors,
   DeleteWebhookResponses,
@@ -48,6 +51,9 @@ import type {
   GetPublicFileData,
   GetPublicFileErrors,
   GetPublicFileResponses,
+  GetRedirectData,
+  GetRedirectErrors,
+  GetRedirectResponses,
   GetSiteData,
   GetSiteErrors,
   GetSiteResponses,
@@ -99,6 +105,9 @@ import type {
   UpdatePublicFileData,
   UpdatePublicFileErrors,
   UpdatePublicFileResponses,
+  UpsertRedirectData,
+  UpsertRedirectErrors,
+  UpsertRedirectResponses,
 } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<
@@ -468,12 +477,53 @@ export class PublicFiles {
 
 export class Redirects {
   /**
+   * Delete redirects in a site
+   */
+  public static delete<ThrowOnError extends boolean = false>(options: Options<DeleteRedirectsData, ThrowOnError>) {
+    return (options.client ?? client).delete<DeleteRedirectsResponses, DeleteRedirectsErrors, ThrowOnError>({
+      security: [{ scheme: 'bearer', type: 'http' }],
+      url: '/sites/{siteId}/redirects',
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
    * List of redirects in a site
    */
   public static list<ThrowOnError extends boolean = false>(options: Options<ListRedirectsData, ThrowOnError>) {
     return (options.client ?? client).get<ListRedirectsResponses, ListRedirectsErrors, ThrowOnError>({
       security: [{ scheme: 'bearer', type: 'http' }],
       url: '/sites/{siteId}/redirects',
+      ...options,
+    });
+  }
+
+  /**
+   * Upsert redirect in a site
+   */
+  public static upsert<ThrowOnError extends boolean = false>(options: Options<UpsertRedirectData, ThrowOnError>) {
+    return (options.client ?? client).patch<UpsertRedirectResponses, UpsertRedirectErrors, ThrowOnError>({
+      security: [{ scheme: 'bearer', type: 'http' }],
+      url: '/sites/{siteId}/redirects',
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
+  }
+
+  /**
+   * Get redirect using fromUrl
+   */
+  public static get<ThrowOnError extends boolean = false>(options: Options<GetRedirectData, ThrowOnError>) {
+    return (options.client ?? client).get<GetRedirectResponses, GetRedirectErrors, ThrowOnError>({
+      security: [{ scheme: 'bearer', type: 'http' }],
+      url: '/sites/{siteId}/redirects{*}',
       ...options,
     });
   }

@@ -30,7 +30,7 @@ export default defineConfig({
       transformer: false,
       asClass: true,
       methodNameBuilder: (operation) => {
-        const requestMethodNames = ['list', 'get', 'create', 'update', 'delete', 'publish'];
+        const requestMethodNames = ['list', 'get', 'create', 'update', 'delete', 'publish', 'upsert'];
 
         if (!operation.operationId) {
           console.log('error', operation);

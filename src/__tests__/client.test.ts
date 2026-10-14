@@ -1,18 +1,19 @@
 import { describe, test, expect } from 'vitest';
 import { VersolyClient } from '../index';
-import { randomUUID } from 'crypto';
 
 type VersolySite = Exclude<NonNullable<Awaited<ReturnType<typeof VersolyClient.prototype.sites.get>>>, undefined>;
 
+
 const config = {
   token: 'f77e6400-0814-4582-9185-03dd13f7ef8a',
-  url: 'http://localhost:8080',
+  url: 'https://localhost:8080',
 };
 
 const exampleVariables = {
   siteId: 'a813080b-2e29-4a1e-838f-dc510e49290a',
   collectionId: '7ef6204a-73c6-46cc-baf4-2dabed1d91b9',
   itemId: 'da2b604b-7328-4175-9dd1-ba164d323501',
+  unknownId: '01a1389c-859e-734b-8399-90e9eeb559cb'
 };
 
 const { siteId, collectionId, itemId } = exampleVariables;
@@ -59,7 +60,7 @@ describe('index', async () => {
   });
 
   test('get page 404', async () => {
-    const { data: page, error } = await client.pages.get({ path: { siteId, pageId: randomUUID() } });
+    const { data: page, error } = await client.pages.get({ path: { siteId, pageId: exampleVariables.unknownId } });
 
     expect(error?.status).toBe(404);
   });

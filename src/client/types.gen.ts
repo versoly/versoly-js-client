@@ -136,10 +136,11 @@ export type ListSitesResponses = {
     data: Array<{
       id: string;
       name: string;
+      customDomain: string | null;
       workspaceId: string;
       createdAt: string;
-      publishedAt?: string;
       updatedAt: string;
+      publishedAt: string | null;
     }>;
   };
 };
@@ -149,9 +150,6 @@ export type ListSitesResponse = ListSitesResponses[keyof ListSitesResponses];
 export type GetSiteData = {
   body?: never;
   path: {
-    /**
-     * Unique identifier for the Site
-     */
     siteId: string;
   };
   query?: never;
@@ -222,15 +220,10 @@ export type GetSiteResponses = {
     };
     head: string;
     scripts: string;
-    config: {
-      [key: string]: unknown;
-    };
     CSS: string;
     JS: string;
-    files: {
-      _redirects: string;
-      'sitemap.xml': string;
-      'page-sitemap.xml': string;
+    config: {
+      [key: string]: unknown;
     };
     folders: Array<{
       id: string;
@@ -244,25 +237,32 @@ export type GetSiteResponses = {
     collectionVariables: {
       collections: {
         [key: string]: {
+          collectionId: string;
           name: string;
           singularName: string;
-          offset: number;
-          limit: number;
-          sortItems?: Array<{
+          offset: number | null;
+          limit: number | null;
+          sortItems: Array<{
             fieldName: string;
             sortBy: 'asc' | 'desc';
           }>;
-          filterItems?: Array<{
-            fieldName: string;
-            filterType: '<' | '>' | '<=' | '>=' | '==' | '!=';
-            value?: string;
-          }>;
+          filterItems: Array<
+            | {
+                fieldName: string;
+                filterType: '!!' | '!';
+              }
+            | {
+                fieldName: string;
+                filterType: '<' | '>' | '<=' | '>=' | '==' | '!=';
+                value: string;
+              }
+          >;
         };
       };
     };
     createdAt: string;
     updatedAt: string;
-    publishedAt?: string;
+    publishedAt: string | null;
   };
 };
 
@@ -271,9 +271,6 @@ export type GetSiteResponse = GetSiteResponses[keyof GetSiteResponses];
 export type PublishSiteData = {
   body?: never;
   path: {
-    /**
-     * Unique identifier for the Site
-     */
     siteId: string;
   };
   query?: never;
@@ -325,9 +322,6 @@ export type PublishSiteResponse = PublishSiteResponses[keyof PublishSiteResponse
 export type ListPagesData = {
   body?: never;
   path: {
-    /**
-     * Unique identifier for the Site
-     */
     siteId: string;
   };
   query?: never;
@@ -377,7 +371,7 @@ export type ListPagesResponses = {
       name: string;
       slug: string;
       folderId: string | null;
-      folderPath?: string;
+      folderPath: string | null;
       status: 'draft' | 'publish';
       head: string;
       scripts: string;
@@ -391,7 +385,7 @@ export type ListPagesResponses = {
         content: string;
       }>;
       layout: {
-        name: string | null;
+        name: string;
       };
       bodyProperties: {
         id?: string;
@@ -399,29 +393,24 @@ export type ListPagesResponses = {
         [key: string]: string | undefined;
       };
       content: string;
-      collectionProperties?: {
-        name: string;
-        groupBy: string | null;
-        pageType: 'list' | 'detail';
-        offset: number;
-        limit: number;
-        itemsPerPage: number | null;
-        filterItems: Array<{
-          fieldName: string;
-          filterType: '<' | '>' | '<=' | '>=' | '==' | '!=';
-          value?: string;
-        }>;
-        sortItems: Array<{
-          fieldName: string;
-          sortBy: 'asc' | 'desc';
-        }>;
-      };
+      collectionProperties:
+        | {
+            name: string;
+            pageType: 'list';
+            groupBy: string | null;
+            itemsPerPage: number | null;
+          }
+        | {
+            name: string;
+            pageType: 'detail';
+          }
+        | null;
       createdAt: string;
       updatedAt: string;
-      deletedAt?: string;
+      deletedAt: string | null;
       createdBy: string;
       updatedBy: string;
-      deletedBy?: string;
+      deletedBy: string | null;
     }>;
   };
 };
@@ -480,7 +469,7 @@ export type GetPageResponses = {
     name: string;
     slug: string;
     folderId: string | null;
-    folderPath?: string;
+    folderPath: string | null;
     status: 'draft' | 'publish';
     head: string;
     scripts: string;
@@ -494,7 +483,7 @@ export type GetPageResponses = {
       content: string;
     }>;
     layout: {
-      name: string | null;
+      name: string;
     };
     bodyProperties: {
       id?: string;
@@ -502,29 +491,24 @@ export type GetPageResponses = {
       [key: string]: string | undefined;
     };
     content: string;
-    collectionProperties?: {
-      name: string;
-      groupBy: string | null;
-      pageType: 'list' | 'detail';
-      offset: number;
-      limit: number;
-      itemsPerPage: number | null;
-      filterItems: Array<{
-        fieldName: string;
-        filterType: '<' | '>' | '<=' | '>=' | '==' | '!=';
-        value?: string;
-      }>;
-      sortItems: Array<{
-        fieldName: string;
-        sortBy: 'asc' | 'desc';
-      }>;
-    };
+    collectionProperties:
+      | {
+          name: string;
+          pageType: 'list';
+          groupBy: string | null;
+          itemsPerPage: number | null;
+        }
+      | {
+          name: string;
+          pageType: 'detail';
+        }
+      | null;
     createdAt: string;
     updatedAt: string;
-    deletedAt?: string;
+    deletedAt: string | null;
     createdBy: string;
     updatedBy: string;
-    deletedBy?: string;
+    deletedBy: string | null;
   };
 };
 
@@ -582,11 +566,18 @@ export type ListComponentsResponses = {
   200: {
     data: Array<{
       id: string;
+      /**
+       * Unique component name, snake case with minimum of 2 words to avoid conflicts with html tags
+       */
       name: string;
       folderId: string | null;
-      folderPath?: string;
+      /**
+       * Component folder name
+       */
+      folderPath: string | null;
+      category: string | null;
       content: string;
-      groups?: Array<{
+      groups: Array<{
         name: string;
         slug: string;
         nestProperties: boolean;
@@ -595,131 +586,273 @@ export type ListComponentsResponses = {
         | {
             name: string;
             slug: string;
-            type: 'PlainText';
             group?: string | null;
             editable: boolean;
             required: boolean;
             validations: {
-              visualModes: Array<'content' | 'developer' | 'designer'>;
+              visualModes?: Array<'content' | 'developer' | 'designer'>;
               singleLine: boolean;
             };
+            type: 'PlainText';
             defaultValue?: string;
           }
         | {
             name: string;
             slug: string;
-            type: 'Option';
             group?: string | null;
             editable: boolean;
             required: boolean;
             validations: {
-              visualModes: Array<'content' | 'developer' | 'designer'>;
-              options: Array<string>;
+              visualModes?: Array<'content' | 'developer' | 'designer'>;
+              options: Array<{
+                value: string;
+              }>;
             };
+            type: 'Option';
             defaultValue?: string;
           }
         | {
             name: string;
             slug: string;
-            type: 'ComponentRef';
             group?: string | null;
             editable: boolean;
             required: boolean;
             validations: {
-              visualModes: Array<'content' | 'developer' | 'designer'>;
+              visualModes?: Array<'content' | 'developer' | 'designer'>;
               componentName: string;
             };
+            type: 'ComponentRef';
           }
         | {
             name: string;
             slug: string;
+            group?: string | null;
+            editable: boolean;
+            required: boolean;
+            validations: {
+              visualModes?: Array<'content' | 'developer' | 'designer'>;
+              utilityPropertyKey?: string;
+            };
             type: 'Color';
-            group?: string | null;
-            editable: boolean;
-            required: boolean;
-            validations: {
-              visualModes: Array<'content' | 'developer' | 'designer'>;
-              utilityPropertyKey: string;
-            };
             defaultValue?: string;
           }
         | {
             name: string;
             slug: string;
-            type: 'RichText';
             group?: string | null;
             editable: boolean;
             required: boolean;
             validations: {
-              visualModes: Array<'content' | 'developer' | 'designer'>;
+              visualModes?: Array<'content' | 'developer' | 'designer'>;
             };
-          }
-        | {
-            name: string;
-            slug: string;
             type: 'Bool';
-            group?: string | null;
-            editable: boolean;
-            required: boolean;
-            validations: {
-              visualModes: Array<'content' | 'developer' | 'designer'>;
-            };
+            defaultValue?: boolean;
           }
         | {
             name: string;
             slug: string;
+            group?: string | null;
+            editable: boolean;
+            required: boolean;
+            validations: {
+              visualModes?: Array<'content' | 'developer' | 'designer'>;
+            };
+            type: 'RichText';
+            defaultValue?: string;
+          }
+        | {
+            name: string;
+            slug: string;
+            group?: string | null;
+            editable: boolean;
+            required: boolean;
+            validations: {
+              visualModes?: Array<'content' | 'developer' | 'designer'>;
+            };
             type: 'Image';
-            group?: string | null;
-            editable: boolean;
-            required: boolean;
-            validations: {
-              visualModes: Array<'content' | 'developer' | 'designer'>;
-            };
             defaultValue?: string;
           }
         | {
             name: string;
             slug: string;
+            group?: string | null;
+            editable: boolean;
+            required: boolean;
+            validations: {
+              visualModes?: Array<'content' | 'developer' | 'designer'>;
+            };
             type: 'Video';
-            group?: string | null;
-            editable: boolean;
-            required: boolean;
-            validations: {
-              visualModes: Array<'content' | 'developer' | 'designer'>;
-            };
             defaultValue?: string;
           }
         | {
             name: string;
             slug: string;
+            group?: string | null;
+            editable: boolean;
+            required: boolean;
+            validations: {
+              visualModes?: Array<'content' | 'developer' | 'designer'>;
+            };
             type: 'Link';
-            group?: string | null;
-            editable: boolean;
-            required: boolean;
-            validations: {
-              visualModes: Array<'content' | 'developer' | 'designer'>;
-            };
             defaultValue?: string;
           }
         | {
             name: string;
             slug: string;
-            type: 'ClassName';
             group?: string | null;
             editable: boolean;
             required: boolean;
             validations: {
-              visualModes: Array<'content' | 'developer' | 'designer'>;
+              visualModes?: Array<'content' | 'developer' | 'designer'>;
             };
+            type: 'ClassName';
             defaultValue?: string;
+          }
+        | {
+            name: string;
+            slug: string;
+            group?: string | null;
+            editable: boolean;
+            required: boolean;
+            validations: {
+              visualModes?: Array<'content' | 'developer' | 'designer'>;
+            };
+            type: 'Repeater';
+            properties: Array<
+              | {
+                  name: string;
+                  slug: string;
+                  group?: string | null;
+                  editable: boolean;
+                  required: boolean;
+                  validations: {
+                    visualModes?: Array<'content' | 'developer' | 'designer'>;
+                    singleLine: boolean;
+                  };
+                  type: 'PlainText';
+                  defaultValue?: string;
+                }
+              | {
+                  name: string;
+                  slug: string;
+                  group?: string | null;
+                  editable: boolean;
+                  required: boolean;
+                  validations: {
+                    visualModes?: Array<'content' | 'developer' | 'designer'>;
+                    options: Array<{
+                      value: string;
+                    }>;
+                  };
+                  type: 'Option';
+                  defaultValue?: string;
+                }
+              | {
+                  name: string;
+                  slug: string;
+                  group?: string | null;
+                  editable: boolean;
+                  required: boolean;
+                  validations: {
+                    visualModes?: Array<'content' | 'developer' | 'designer'>;
+                    componentName: string;
+                  };
+                  type: 'ComponentRef';
+                }
+              | {
+                  name: string;
+                  slug: string;
+                  group?: string | null;
+                  editable: boolean;
+                  required: boolean;
+                  validations: {
+                    visualModes?: Array<'content' | 'developer' | 'designer'>;
+                    utilityPropertyKey?: string;
+                  };
+                  type: 'Color';
+                  defaultValue?: string;
+                }
+              | {
+                  name: string;
+                  slug: string;
+                  group?: string | null;
+                  editable: boolean;
+                  required: boolean;
+                  validations: {
+                    visualModes?: Array<'content' | 'developer' | 'designer'>;
+                  };
+                  type: 'Bool';
+                  defaultValue?: boolean;
+                }
+              | {
+                  name: string;
+                  slug: string;
+                  group?: string | null;
+                  editable: boolean;
+                  required: boolean;
+                  validations: {
+                    visualModes?: Array<'content' | 'developer' | 'designer'>;
+                  };
+                  type: 'RichText';
+                  defaultValue?: string;
+                }
+              | {
+                  name: string;
+                  slug: string;
+                  group?: string | null;
+                  editable: boolean;
+                  required: boolean;
+                  validations: {
+                    visualModes?: Array<'content' | 'developer' | 'designer'>;
+                  };
+                  type: 'Image';
+                  defaultValue?: string;
+                }
+              | {
+                  name: string;
+                  slug: string;
+                  group?: string | null;
+                  editable: boolean;
+                  required: boolean;
+                  validations: {
+                    visualModes?: Array<'content' | 'developer' | 'designer'>;
+                  };
+                  type: 'Video';
+                  defaultValue?: string;
+                }
+              | {
+                  name: string;
+                  slug: string;
+                  group?: string | null;
+                  editable: boolean;
+                  required: boolean;
+                  validations: {
+                    visualModes?: Array<'content' | 'developer' | 'designer'>;
+                  };
+                  type: 'Link';
+                  defaultValue?: string;
+                }
+              | {
+                  name: string;
+                  slug: string;
+                  group?: string | null;
+                  editable: boolean;
+                  required: boolean;
+                  validations: {
+                    visualModes?: Array<'content' | 'developer' | 'designer'>;
+                  };
+                  type: 'ClassName';
+                  defaultValue?: string;
+                }
+            >;
           }
       >;
       createdAt: string;
       updatedAt: string;
-      deletedAt?: string;
+      deletedAt: string | null;
       createdBy: string;
       updatedBy: string;
-      deletedBy?: string;
+      deletedBy: string | null;
     }>;
   };
 };
@@ -729,13 +862,7 @@ export type ListComponentsResponse = ListComponentsResponses[keyof ListComponent
 export type GetComponentData = {
   body?: never;
   path: {
-    /**
-     * Unique identifier for the Site
-     */
     siteId: string;
-    /**
-     * Unique identifier
-     */
     componentId: string;
   };
   query?: never;
@@ -781,11 +908,18 @@ export type GetComponentResponses = {
    */
   200: {
     id: string;
+    /**
+     * Unique component name, snake case with minimum of 2 words to avoid conflicts with html tags
+     */
     name: string;
     folderId: string | null;
-    folderPath?: string;
+    /**
+     * Component folder name
+     */
+    folderPath: string | null;
+    category: string | null;
     content: string;
-    groups?: Array<{
+    groups: Array<{
       name: string;
       slug: string;
       nestProperties: boolean;
@@ -794,131 +928,273 @@ export type GetComponentResponses = {
       | {
           name: string;
           slug: string;
-          type: 'PlainText';
           group?: string | null;
           editable: boolean;
           required: boolean;
           validations: {
-            visualModes: Array<'content' | 'developer' | 'designer'>;
+            visualModes?: Array<'content' | 'developer' | 'designer'>;
             singleLine: boolean;
           };
+          type: 'PlainText';
           defaultValue?: string;
         }
       | {
           name: string;
           slug: string;
-          type: 'Option';
           group?: string | null;
           editable: boolean;
           required: boolean;
           validations: {
-            visualModes: Array<'content' | 'developer' | 'designer'>;
-            options: Array<string>;
+            visualModes?: Array<'content' | 'developer' | 'designer'>;
+            options: Array<{
+              value: string;
+            }>;
           };
+          type: 'Option';
           defaultValue?: string;
         }
       | {
           name: string;
           slug: string;
-          type: 'ComponentRef';
           group?: string | null;
           editable: boolean;
           required: boolean;
           validations: {
-            visualModes: Array<'content' | 'developer' | 'designer'>;
+            visualModes?: Array<'content' | 'developer' | 'designer'>;
             componentName: string;
           };
+          type: 'ComponentRef';
         }
       | {
           name: string;
           slug: string;
+          group?: string | null;
+          editable: boolean;
+          required: boolean;
+          validations: {
+            visualModes?: Array<'content' | 'developer' | 'designer'>;
+            utilityPropertyKey?: string;
+          };
           type: 'Color';
-          group?: string | null;
-          editable: boolean;
-          required: boolean;
-          validations: {
-            visualModes: Array<'content' | 'developer' | 'designer'>;
-            utilityPropertyKey: string;
-          };
           defaultValue?: string;
         }
       | {
           name: string;
           slug: string;
-          type: 'RichText';
           group?: string | null;
           editable: boolean;
           required: boolean;
           validations: {
-            visualModes: Array<'content' | 'developer' | 'designer'>;
+            visualModes?: Array<'content' | 'developer' | 'designer'>;
           };
-        }
-      | {
-          name: string;
-          slug: string;
           type: 'Bool';
-          group?: string | null;
-          editable: boolean;
-          required: boolean;
-          validations: {
-            visualModes: Array<'content' | 'developer' | 'designer'>;
-          };
+          defaultValue?: boolean;
         }
       | {
           name: string;
           slug: string;
+          group?: string | null;
+          editable: boolean;
+          required: boolean;
+          validations: {
+            visualModes?: Array<'content' | 'developer' | 'designer'>;
+          };
+          type: 'RichText';
+          defaultValue?: string;
+        }
+      | {
+          name: string;
+          slug: string;
+          group?: string | null;
+          editable: boolean;
+          required: boolean;
+          validations: {
+            visualModes?: Array<'content' | 'developer' | 'designer'>;
+          };
           type: 'Image';
-          group?: string | null;
-          editable: boolean;
-          required: boolean;
-          validations: {
-            visualModes: Array<'content' | 'developer' | 'designer'>;
-          };
           defaultValue?: string;
         }
       | {
           name: string;
           slug: string;
+          group?: string | null;
+          editable: boolean;
+          required: boolean;
+          validations: {
+            visualModes?: Array<'content' | 'developer' | 'designer'>;
+          };
           type: 'Video';
-          group?: string | null;
-          editable: boolean;
-          required: boolean;
-          validations: {
-            visualModes: Array<'content' | 'developer' | 'designer'>;
-          };
           defaultValue?: string;
         }
       | {
           name: string;
           slug: string;
+          group?: string | null;
+          editable: boolean;
+          required: boolean;
+          validations: {
+            visualModes?: Array<'content' | 'developer' | 'designer'>;
+          };
           type: 'Link';
-          group?: string | null;
-          editable: boolean;
-          required: boolean;
-          validations: {
-            visualModes: Array<'content' | 'developer' | 'designer'>;
-          };
           defaultValue?: string;
         }
       | {
           name: string;
           slug: string;
-          type: 'ClassName';
           group?: string | null;
           editable: boolean;
           required: boolean;
           validations: {
-            visualModes: Array<'content' | 'developer' | 'designer'>;
+            visualModes?: Array<'content' | 'developer' | 'designer'>;
           };
+          type: 'ClassName';
           defaultValue?: string;
+        }
+      | {
+          name: string;
+          slug: string;
+          group?: string | null;
+          editable: boolean;
+          required: boolean;
+          validations: {
+            visualModes?: Array<'content' | 'developer' | 'designer'>;
+          };
+          type: 'Repeater';
+          properties: Array<
+            | {
+                name: string;
+                slug: string;
+                group?: string | null;
+                editable: boolean;
+                required: boolean;
+                validations: {
+                  visualModes?: Array<'content' | 'developer' | 'designer'>;
+                  singleLine: boolean;
+                };
+                type: 'PlainText';
+                defaultValue?: string;
+              }
+            | {
+                name: string;
+                slug: string;
+                group?: string | null;
+                editable: boolean;
+                required: boolean;
+                validations: {
+                  visualModes?: Array<'content' | 'developer' | 'designer'>;
+                  options: Array<{
+                    value: string;
+                  }>;
+                };
+                type: 'Option';
+                defaultValue?: string;
+              }
+            | {
+                name: string;
+                slug: string;
+                group?: string | null;
+                editable: boolean;
+                required: boolean;
+                validations: {
+                  visualModes?: Array<'content' | 'developer' | 'designer'>;
+                  componentName: string;
+                };
+                type: 'ComponentRef';
+              }
+            | {
+                name: string;
+                slug: string;
+                group?: string | null;
+                editable: boolean;
+                required: boolean;
+                validations: {
+                  visualModes?: Array<'content' | 'developer' | 'designer'>;
+                  utilityPropertyKey?: string;
+                };
+                type: 'Color';
+                defaultValue?: string;
+              }
+            | {
+                name: string;
+                slug: string;
+                group?: string | null;
+                editable: boolean;
+                required: boolean;
+                validations: {
+                  visualModes?: Array<'content' | 'developer' | 'designer'>;
+                };
+                type: 'Bool';
+                defaultValue?: boolean;
+              }
+            | {
+                name: string;
+                slug: string;
+                group?: string | null;
+                editable: boolean;
+                required: boolean;
+                validations: {
+                  visualModes?: Array<'content' | 'developer' | 'designer'>;
+                };
+                type: 'RichText';
+                defaultValue?: string;
+              }
+            | {
+                name: string;
+                slug: string;
+                group?: string | null;
+                editable: boolean;
+                required: boolean;
+                validations: {
+                  visualModes?: Array<'content' | 'developer' | 'designer'>;
+                };
+                type: 'Image';
+                defaultValue?: string;
+              }
+            | {
+                name: string;
+                slug: string;
+                group?: string | null;
+                editable: boolean;
+                required: boolean;
+                validations: {
+                  visualModes?: Array<'content' | 'developer' | 'designer'>;
+                };
+                type: 'Video';
+                defaultValue?: string;
+              }
+            | {
+                name: string;
+                slug: string;
+                group?: string | null;
+                editable: boolean;
+                required: boolean;
+                validations: {
+                  visualModes?: Array<'content' | 'developer' | 'designer'>;
+                };
+                type: 'Link';
+                defaultValue?: string;
+              }
+            | {
+                name: string;
+                slug: string;
+                group?: string | null;
+                editable: boolean;
+                required: boolean;
+                validations: {
+                  visualModes?: Array<'content' | 'developer' | 'designer'>;
+                };
+                type: 'ClassName';
+                defaultValue?: string;
+              }
+          >;
         }
     >;
     createdAt: string;
     updatedAt: string;
-    deletedAt?: string;
+    deletedAt: string | null;
     createdBy: string;
     updatedBy: string;
-    deletedBy?: string;
+    deletedBy: string | null;
   };
 };
 
@@ -1549,9 +1825,6 @@ export type GetFormSubmissionResponse = GetFormSubmissionResponses[keyof GetForm
 export type ListCollectionsData = {
   body?: never;
   path: {
-    /**
-     * Unique identifier for the Site
-     */
     siteId: string;
   };
   query?: never;
@@ -1597,13 +1870,17 @@ export type ListCollectionsResponses = {
    */
   200: {
     data: Array<{
-      id?: string;
-      name?: string;
-      singularName?: string;
-      slug?: string;
-      createdAt?: string;
-      publishedAt?: string;
-      updatedAt?: string;
+      id: string;
+      name: string;
+      singularName: string;
+      /**
+       * Unique identifier for the collection, used to generate nested sitemap for collection pages.
+       */
+      slug: string;
+      folderName: string | null;
+      createdAt: string;
+      publishedAt: string | null;
+      updatedAt: string;
     }>;
   };
 };
@@ -1613,9 +1890,6 @@ export type ListCollectionsResponse = ListCollectionsResponses[keyof ListCollect
 export type GetCollectionData = {
   body?: never;
   path: {
-    /**
-     * Unique identifier
-     */
     collectionId: string;
   };
   query?: never;
@@ -1660,35 +1934,62 @@ export type GetCollectionResponses = {
    * Default Response
    */
   200: {
+    id: string;
+    name: string;
+    singularName: string;
     /**
-     * Unique identifier
+     * Unique identifier for the collection, used to generate nested sitemap for collection pages.
      */
-    id?: string;
-    name?: string;
-    slug?: string;
-    singularName?: string;
-    /**
-     * Date and time in ISO 8601 format
-     */
-    createdAt?: string;
-    /**
-     * Date and time in ISO 8601 format
-     */
-    publishedAt?: string;
-    /**
-     * Date and time in ISO 8601 format
-     */
-    updatedAt?: string;
-    fields?: Array<{
-      name: string;
-      slug: string;
-      type: string;
-      editable?: boolean;
-      required?: boolean;
-      validations?: {
-        collectionId?: string;
-      };
-    }>;
+    slug: string;
+    folderName: string | null;
+    fields: Array<
+      | {
+          name: string;
+          slug: string;
+          editable: boolean;
+          required: boolean;
+          type: 'Order';
+          validations?: {
+            collectionId: string | null;
+          };
+        }
+      | {
+          name: string;
+          slug: string;
+          editable: boolean;
+          required: boolean;
+          type: 'ItemRef' | 'ItemRefSet' | 'Lookup';
+          validations: {
+            collectionId: string;
+          };
+        }
+      | {
+          name: string;
+          slug: string;
+          editable: boolean;
+          required: boolean;
+          type:
+            | 'PlainText'
+            | 'RichText'
+            | 'Image'
+            | 'Video'
+            | 'Link'
+            | 'Email'
+            | 'Phone'
+            | 'Date'
+            | 'Bool'
+            | 'Color'
+            | 'Number'
+            | 'Option'
+            | 'File'
+            | 'HTML'
+            | 'User'
+            | 'MetaTags';
+        }
+    >;
+    createdAt: string;
+    publishedAt: string | null;
+    updatedAt: string;
   };
 };
 
@@ -1831,7 +2132,7 @@ export type CreateItemData = {
     fieldData: {
       name: string;
       slug: string;
-      [key: string]: unknown | string;
+      [key: string]: string | number | boolean | null | Array<string> | string;
     };
   };
   path: {
@@ -1882,16 +2183,13 @@ export type CreateItemResponses = {
    * Default Response
    */
   200: {
-    /**
-     * Unique identifier
-     */
     id: string;
     createdAt: string;
     updatedAt: string;
     fieldData: {
-      name?: string;
-      slug?: string;
-      [key: string]: unknown | string | undefined;
+      name: string;
+      slug: string;
+      [key: string]: string | number | boolean | null | Array<string> | string;
     };
   };
 };
@@ -1901,13 +2199,7 @@ export type CreateItemResponse = CreateItemResponses[keyof CreateItemResponses];
 export type GetItemData = {
   body?: never;
   path: {
-    /**
-     * Unique identifier for the Collection
-     */
     collectionId: string;
-    /**
-     * Unique identifier for the Item
-     */
     itemId: string;
   };
   query?: never;
@@ -1952,16 +2244,13 @@ export type GetItemResponses = {
    * Default Response
    */
   200: {
-    /**
-     * Unique identifier
-     */
     id: string;
     createdAt: string;
     updatedAt: string;
     fieldData: {
-      name?: string;
-      slug?: string;
-      [key: string]: unknown | string | undefined;
+      name: string;
+      slug: string;
+      [key: string]: string | number | boolean | null | Array<string> | string;
     };
   };
 };
@@ -1971,19 +2260,13 @@ export type GetItemResponse = GetItemResponses[keyof GetItemResponses];
 export type UpdateItemData = {
   body: {
     fieldData: {
-      name?: string;
-      slug?: string;
-      [key: string]: unknown | string | undefined;
+      name: string;
+      slug: string;
+      [key: string]: string | number | boolean | null | Array<string> | string;
     };
   };
   path: {
-    /**
-     * Unique identifier
-     */
     collectionId: string;
-    /**
-     * Unique identifier
-     */
     itemId: string;
   };
   query?: never;
@@ -2028,16 +2311,13 @@ export type UpdateItemResponses = {
    * Default Response
    */
   200: {
-    /**
-     * Unique identifier
-     */
     id: string;
     createdAt: string;
     updatedAt: string;
     fieldData: {
-      name?: string;
-      slug?: string;
-      [key: string]: unknown | string | undefined;
+      name: string;
+      slug: string;
+      [key: string]: string | number | boolean | null | Array<string> | string;
     };
   };
 };
@@ -2097,6 +2377,8 @@ export type ListPublicFilesResponses = {
       contentType: string | null;
       updatedAt: string;
       path:
+        | 'sitemap.xml'
+        | 'page-sitemap.xml'
         | 'robots.txt'
         | '.well-known/apple-app-site-association'
         | '.well-known/assetlinks.json'
@@ -2113,6 +2395,8 @@ export type DeletePublicFileData = {
   path: {
     siteId: string;
     path:
+      | 'sitemap.xml'
+      | 'page-sitemap.xml'
       | 'robots.txt'
       | '.well-known/apple-app-site-association'
       | '.well-known/assetlinks.json'
@@ -2158,20 +2442,9 @@ export type DeletePublicFileError = DeletePublicFileErrors[keyof DeletePublicFil
 
 export type DeletePublicFileResponses = {
   /**
-   * Default Response
+   * Successfully executed
    */
-  200: {
-    siteId: string;
-    content: string;
-    contentType: string | null;
-    updatedAt: string;
-    path:
-      | 'robots.txt'
-      | '.well-known/apple-app-site-association'
-      | '.well-known/assetlinks.json'
-      | 'llms.txt'
-      | 'llms-full.txt';
-  };
+  204: void;
 };
 
 export type DeletePublicFileResponse = DeletePublicFileResponses[keyof DeletePublicFileResponses];
@@ -2181,6 +2454,8 @@ export type GetPublicFileData = {
   path: {
     siteId: string;
     path:
+      | 'sitemap.xml'
+      | 'page-sitemap.xml'
       | 'robots.txt'
       | '.well-known/apple-app-site-association'
       | '.well-known/assetlinks.json'
@@ -2234,6 +2509,8 @@ export type GetPublicFileResponses = {
     contentType: string | null;
     updatedAt: string;
     path:
+      | 'sitemap.xml'
+      | 'page-sitemap.xml'
       | 'robots.txt'
       | '.well-known/apple-app-site-association'
       | '.well-known/assetlinks.json'
@@ -2251,6 +2528,8 @@ export type UpdatePublicFileData = {
   path: {
     siteId: string;
     path:
+      | 'sitemap.xml'
+      | 'page-sitemap.xml'
       | 'robots.txt'
       | '.well-known/apple-app-site-association'
       | '.well-known/assetlinks.json'
@@ -2304,6 +2583,8 @@ export type UpdatePublicFileResponses = {
     contentType: string | null;
     updatedAt: string;
     path:
+      | 'sitemap.xml'
+      | 'page-sitemap.xml'
       | 'robots.txt'
       | '.well-known/apple-app-site-association'
       | '.well-known/assetlinks.json'
@@ -2313,6 +2594,59 @@ export type UpdatePublicFileResponses = {
 };
 
 export type UpdatePublicFileResponse = UpdatePublicFileResponses[keyof UpdatePublicFileResponses];
+
+export type DeleteRedirectsData = {
+  body: {
+    fromUrls: Array<string>;
+  };
+  path: {
+    siteId: string;
+  };
+  query?: never;
+  url: '/sites/{siteId}/redirects';
+};
+
+export type DeleteRedirectsErrors = {
+  /**
+   * Default Response
+   */
+  400: Def2;
+  /**
+   * Default Response
+   */
+  401: Def3;
+  /**
+   * Default Response
+   */
+  404: Def4;
+  /**
+   * Default Response
+   */
+  409: Def5;
+  /**
+   * Default Response
+   */
+  429: Def6;
+  /**
+   * Default Response
+   */
+  500: Def7;
+  /**
+   * Default Response
+   */
+  '4XX': Def1;
+};
+
+export type DeleteRedirectsError = DeleteRedirectsErrors[keyof DeleteRedirectsErrors];
+
+export type DeleteRedirectsResponses = {
+  /**
+   * Successfully executed
+   */
+  204: void;
+};
+
+export type DeleteRedirectsResponse = DeleteRedirectsResponses[keyof DeleteRedirectsResponses];
 
 export type ListRedirectsData = {
   body?: never;
@@ -2362,14 +2696,147 @@ export type ListRedirectsResponses = {
    */
   200: {
     data: Array<{
+      id: string;
+      siteId: string;
+      branchId: string | null;
       fromUrl: string;
       toUrl: string;
-      redirectType: 301 | 302;
+      statusCode: 301 | 302;
+      createdAt: string;
+      updatedAt: string;
+      deletedAt: string | null;
     }>;
   };
 };
 
 export type ListRedirectsResponse = ListRedirectsResponses[keyof ListRedirectsResponses];
+
+export type UpsertRedirectData = {
+  body: {
+    fromUrl: string;
+    toUrl: string;
+    statusCode: 301 | 302;
+  };
+  path: {
+    siteId: string;
+  };
+  query?: never;
+  url: '/sites/{siteId}/redirects';
+};
+
+export type UpsertRedirectErrors = {
+  /**
+   * Default Response
+   */
+  400: Def2;
+  /**
+   * Default Response
+   */
+  401: Def3;
+  /**
+   * Default Response
+   */
+  404: Def4;
+  /**
+   * Default Response
+   */
+  409: Def5;
+  /**
+   * Default Response
+   */
+  429: Def6;
+  /**
+   * Default Response
+   */
+  500: Def7;
+  /**
+   * Default Response
+   */
+  '4XX': Def1;
+};
+
+export type UpsertRedirectError = UpsertRedirectErrors[keyof UpsertRedirectErrors];
+
+export type UpsertRedirectResponses = {
+  /**
+   * Default Response
+   */
+  200: {
+    id: string;
+    siteId: string;
+    branchId: string | null;
+    fromUrl: string;
+    toUrl: string;
+    statusCode: 301 | 302;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt: string | null;
+  };
+};
+
+export type UpsertRedirectResponse = UpsertRedirectResponses[keyof UpsertRedirectResponses];
+
+export type GetRedirectData = {
+  body?: never;
+  path: {
+    siteId: string;
+    '*': string;
+  };
+  query?: never;
+  url: '/sites/{siteId}/redirects{*}';
+};
+
+export type GetRedirectErrors = {
+  /**
+   * Default Response
+   */
+  400: Def2;
+  /**
+   * Default Response
+   */
+  401: Def3;
+  /**
+   * Default Response
+   */
+  404: Def4;
+  /**
+   * Default Response
+   */
+  409: Def5;
+  /**
+   * Default Response
+   */
+  429: Def6;
+  /**
+   * Default Response
+   */
+  500: Def7;
+  /**
+   * Default Response
+   */
+  '4XX': Def1;
+};
+
+export type GetRedirectError = GetRedirectErrors[keyof GetRedirectErrors];
+
+export type GetRedirectResponses = {
+  /**
+   * Default Response
+   */
+  200: {
+    id: string;
+    siteId: string;
+    branchId: string | null;
+    fromUrl: string;
+    toUrl: string;
+    statusCode: 301 | 302;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt: string | null;
+  };
+};
+
+export type GetRedirectResponse = GetRedirectResponses[keyof GetRedirectResponses];
 
 export type ListWebhooksData = {
   body?: never;
@@ -2454,9 +2921,6 @@ export type CreateWebhookData = {
     };
   };
   path: {
-    /**
-     * Unique identifier for the Site
-     */
     siteId: string;
   };
   query?: never;
@@ -2578,9 +3042,6 @@ export type DeleteWebhookResponse = DeleteWebhookResponses[keyof DeleteWebhookRe
 export type GetWebhookData = {
   body?: never;
   path: {
-    /**
-     * Unique identifier
-     */
     webhookId: string;
   };
   query?: never;
